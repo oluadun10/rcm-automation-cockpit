@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Automation Prioritization Cockpit — RCM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0E1B2A; --ink-2:#33485E; --muted:#6C7C8C;
+    --surface:#EEF2F6; --card:#FFFFFF; --line:#DCE4EC;
+    --teal:#0E7C7B; --teal-deep:#0B5E5D; --teal-soft:#E2F0EF;
+    --amber:#D99A2B; --signal:#E0A13C;
+    --w1:#168A6E; --w2:#D99A2B; --w3:#B05A50;
+    --shadow:0 1px 2px rgba(14,27,42,.06),0 8px 24px rgba(14,27,42,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    font-family:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+    background:var(--surface); color:var(--ink);
+    line-height:1.5; -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+  .wrap{max-width:1240px;margin:0 auto;padding:28px 22px 80px}
+
+  header{margin-bottom:22px}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--teal-deep);font-weight:600}
+  h1{font-family:"Space Grotesk",sans-serif;font-weight:700;letter-spacing:-.02em;
+    font-size:clamp(28px,4.4vw,44px);line-height:1.02;margin:.18em 0 .35em}
+  h1 .accent{color:var(--teal)}
+  .lede{max-width:760px;color:var(--ink-2);font-size:16px}
+  .lede b{color:var(--ink);font-weight:600}
+  .note{margin-top:12px;display:inline-flex;gap:9px;align-items:flex-start;
+    background:#FBF3E2;border:1px solid #EAD4A6;border-radius:9px;
+    padding:8px 12px;font-size:12.5px;color:#7A5A1A;max-width:760px}
+  .note svg{flex:none;margin-top:1px}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0 24px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:13px;
+    padding:15px 16px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .stat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--teal)}
+  .stat .k{font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .stat .v{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:26px;letter-spacing:-.01em;margin-top:3px}
+  .stat .sub{font-size:11.5px;color:var(--muted);margin-top:1px}
+
+  .grid{display:grid;grid-template-columns:312px 1fr;gap:20px;align-items:start}
+
+  .rail{background:var(--card);border:1px solid var(--line);border-radius:15px;
+    box-shadow:var(--shadow);position:sticky;top:16px;overflow:hidden}
+  .rail-pad{padding:17px 17px 6px}
+  .rail h2{font-family:"Space Grotesk",sans-serif;font-size:13px;font-weight:600;
+    letter-spacing:.02em;text-transform:uppercase;color:var(--ink);
+    display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+  .rail .hint{font-size:12px;color:var(--muted);margin-bottom:13px}
+  .sect{border-top:1px solid var(--line);padding:15px 17px}
+  .sect:first-of-type{border-top:none}
+
+  .slider{margin-bottom:13px}
+  .slider:last-child{margin-bottom:4px}
+  .slider .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
+  .slider .lab{font-size:13px;font-weight:500;color:var(--ink-2)}
+  .slider .pct{font-size:12.5px;font-weight:600;color:var(--teal-deep)}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;border-radius:4px;
+    background:linear-gradient(90deg,var(--teal) var(--fill,50%),#E3E9EF var(--fill,50%));outline:none;cursor:pointer}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+    background:#fff;border:2.5px solid var(--teal);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:2.5px solid var(--teal);cursor:pointer}
+  .assume{display:flex;gap:10px;margin-bottom:4px}
+  .assume label{flex:1;font-size:12px;color:var(--ink-2)}
+  .assume .ipt{display:flex;align-items:center;gap:4px;margin-top:4px;
+    border:1px solid var(--line);border-radius:8px;padding:4px 8px;background:#FAFCFD}
+  .assume .ipt span{color:var(--muted);font-size:12px}
+  .assume input{border:none;background:none;width:100%;font-family:"IBM Plex Mono",monospace;
+    font-size:13px;color:var(--ink);outline:none}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{font-size:12px;font-weight:500;padding:5px 10px;border-radius:20px;cursor:pointer;
+    border:1px solid var(--line);background:#fff;color:var(--ink-2);transition:.13s;user-select:none}
+  .chip:hover{border-color:var(--teal);color:var(--teal-deep)}
+  .chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .chip.w.on{background:var(--ww);border-color:var(--ww)}
+  .reset{width:100%;margin:2px 0 4px;padding:9px;border-radius:9px;border:1px solid var(--line);
+    background:#fff;color:var(--ink-2);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:.13s}
+  .reset:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow);overflow:hidden}
+  .panel + .panel{margin-top:20px}
+  .panel-head{padding:15px 18px 13px;border-bottom:1px solid var(--line);display:flex;
+    justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap}
+  .panel-head h2{font-family:"Space Grotesk",sans-serif;font-size:16px;font-weight:600;letter-spacing:-.01em}
+  .panel-head p{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .legend{display:flex;gap:14px;font-size:11.5px;color:var(--ink-2)}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+
+  .chartbox{padding:6px 10px 14px;position:relative}
+  #chart{width:100%;height:auto;display:block}
+  .tip{position:absolute;pointer-events:none;opacity:0;transform:translateY(4px);
+    transition:opacity .12s,transform .12s;background:var(--ink);color:#fff;
+    border-radius:9px;padding:9px 11px;font-size:12px;max-width:230px;z-index:5;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+  .tip b{font-weight:600;display:block;margin-bottom:3px;font-size:12.5px}
+  .tip .r{display:flex;justify-content:space-between;gap:14px;color:#B9C6D4}
+  .tip .r .mono{color:#fff}
+  .gridline{stroke:#EAEFF4}
+  .axis-l{fill:var(--muted);font-size:10.5px;font-family:"IBM Plex Mono",monospace}
+  .quad{fill:var(--muted);font-size:11px;font-weight:600;font-family:"Space Grotesk",sans-serif;opacity:.5;text-transform:uppercase;letter-spacing:.04em}
+  circle.bub{cursor:pointer;transition:cx .5s cubic-bezier(.4,0,.2,1),cy .5s cubic-bezier(.4,0,.2,1),r .25s,fill-opacity .2s,stroke-width .15s}
+
+  .listwrap{padding:6px 8px 12px}
+  .lhead{display:grid;grid-template-columns:38px 1fr 132px 78px 92px 58px;gap:10px;
+    padding:8px 12px 9px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .lhead .num{text-align:right}
+  .rows{position:relative}
+  .opp{display:grid;grid-template-columns:38px 1fr 132px 78px 92px 58px;gap:10px;align-items:center;
+    padding:11px 12px;border-radius:11px;will-change:transform}
+  .opp:nth-child(odd){background:#F8FAFC}
+  .opp .rank{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:16px;color:var(--ink-2);text-align:right}
+  .opp .rank.top{color:var(--teal)}
+  .opp .name{font-weight:600;font-size:13.5px;color:var(--ink);line-height:1.25}
+  .opp .fn{font-size:11.5px;color:var(--muted);margin-top:1px}
+  .scorecell{display:flex;align-items:center;gap:9px}
+  .bar{flex:1;height:6px;border-radius:4px;background:#E7ECF1;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:4px;background:var(--teal);transition:width .45s cubic-bezier(.4,0,.2,1)}
+  .scorenum{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:14px;width:26px;text-align:right}
+  .num{text-align:right;font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--ink-2)}
+  .num.val{color:var(--ink);font-weight:500}
+  .tool{font-size:11.5px;color:var(--muted);line-height:1.2}
+  .wave{display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600;
+    padding:3px 9px;border-radius:20px;white-space:nowrap}
+  .empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:13.5px}
+
+  footer{margin-top:26px;font-size:11.5px;color:var(--muted);text-align:center;line-height:1.6}
+
+  @media(max-width:900px){
+    .grid{grid-template-columns:1fr}
+    .rail{position:static}
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .lhead,.opp{grid-template-columns:30px 1fr 92px 70px}
+    .lhead .c-tool,.opp .c-tool,.lhead .c-eff,.opp .c-eff{display:none}
+  }
+  @media(max-width:520px){
+    .stats{grid-template-columns:1fr 1fr}
+    .lhead,.opp{grid-template-columns:28px 1fr 64px}
+    .lhead .c-val,.opp .c-val{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Enterprise Automation · Revenue Cycle</div>
+    <h1>Automation Prioritization <span class="accent">Cockpit</span></h1>
+    <p class="lede">A live model of the RCM automation pipeline. <b>Move the scoring weights and the ranking re-sorts in real time.</b> Built to prioritize the next wave of opportunities flowing into <b>Prime Flow</b>.</p>
+    <div class="note">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 8v5M12 16.5v.5" stroke="#B5862A" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="12" r="9.2" stroke="#B5862A" stroke-width="1.8"/></svg>
+      <span>Volumes, handle times and dollars are illustrative placeholders to demonstrate the model — not HPI figures. Swap the assumptions for actuals and everything re-derives.</span>
+    </div>
+  </header>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="grid">
+    <aside class="rail">
+      <div class="rail-pad">
+        <h2>Scoring weights</h2>
+        <div class="hint">Relative emphasis across the six criteria. They normalize automatically.</div>
+      </div>
+      <div class="sect" id="sliders"></div>
+      <div class="sect">
+        <h2 style="margin-bottom:11px">ROI assumptions</h2>
+        <div class="assume">
+          <label>Loaded cost / hr
+            <div class="ipt"><span>$</span><input id="rate" type="number" min="0" step="1" value="20"></div>
+          </label>
+          <label>Net realization
+            <div class="ipt"><input id="real" type="number" min="0" max="100" step="1" value="85"><span>%</span></div>
+          </label>
+        </div>
+      </div>
+      <div class="sect">
+        <h2 style="margin-bottom:11px">Filter by function</h2>
+        <div class="chips" id="fnchips"></div>
+      </div>
+      <div class="sect">
+        <h2 style="margin-bottom:11px">Filter by wave</h2>
+        <div class="chips" id="wavechips"></div>
+      </div>
+      <div class="sect">
+        <button class="reset" id="reset">Reset weights &amp; filters</button>
+      </div>
+    </aside>
+
+    <div>
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Value vs. effort</h2>
+            <p>Vertical position is the live priority score. Bubble size is annual value. The current top 5 are highlighted.</p>
+          </div>
+          <div class="legend">
+            <span><i style="background:var(--w1)"></i>Wave 1</span>
+            <span><i style="background:var(--w2)"></i>Wave 2</span>
+            <span><i style="background:var(--w3)"></i>Wave 3</span>
+          </div>
+        </div>
+        <div class="chartbox">
+          <svg id="chart" viewBox="0 0 760 360" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Value versus effort scatter plot"></svg>
+          <div class="tip" id="tip"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Ranked pipeline</h2>
+            <p id="count"></p>
+          </div>
+        </div>
+        <div class="listwrap">
+          <div class="lhead">
+            <div class="num">#</div><div>Opportunity</div>
+            <div>Priority score</div>
+            <div class="num c-val">Net $/yr</div>
+            <div class="c-tool">Tooling</div>
+            <div class="c-eff">Wave</div>
+          </div>
+          <div class="rows" id="rows"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <footer>Prepared as candidate pre-work · Illustrative model · Demonstrates the Month-1 prioritization framework and Month-2 scored pipeline.</footer>
+</div>
+
+<script>
+const CRIT=[
+ {key:"value",lab:"Business value / ROI"},
+ {key:"vol",lab:"Volume & frequency"},
+ {key:"feas",lab:"Feasibility / readiness"},
+ {key:"std",lab:"Process standardization"},
+ {key:"strat",lab:"Strategic alignment"},
+ {key:"risk",lab:"Risk & compliance"},
+];
+const DEFAULT_W=[25,15,20,15,15,10];
+const DATA=[
+ {f:"Claims",n:"Claim status checks (276/277)",vol:2000000,min:3,stp:.80,sc:[5,5,4,4,4,5],tool:"UiPath (unattended)",eff:"M"},
+ {f:"Payment Posting",n:"ERA / 835 auto-posting & exceptions",vol:1500000,min:2,stp:.85,sc:[5,5,4,4,4,4],tool:"Power Automate + UiPath",eff:"M"},
+ {f:"Patient Access",n:"Eligibility & benefits verification (270/271)",vol:1200000,min:4,stp:.70,sc:[5,5,3,3,5,4],tool:"UiPath + payer APIs",eff:"L"},
+ {f:"Denials & Appeals",n:"Denial categorization & routing (CARC/RARC)",vol:450000,min:5,stp:.70,sc:[5,4,4,4,5,4],tool:"Power Automate + rules",eff:"M"},
+ {f:"A/R & Patient Billing",n:"Patient statement / dunning workflow",vol:1800000,min:1,stp:.85,sc:[4,5,4,4,3,4],tool:"Power Automate",eff:"S"},
+ {f:"A/R & Patient Billing",n:"Aged A/R status checks on payer portals",vol:900000,min:4,stp:.75,sc:[4,4,4,4,3,4],tool:"UiPath (unattended)",eff:"M"},
+ {f:"Coding & Charge",n:"Charge capture reconciliation",vol:800000,min:3,stp:.60,sc:[4,4,3,3,4,4],tool:"Power Automate + IDP",eff:"M"},
+ {f:"Coding & Charge",n:"DNFB / un-coded encounter routing",vol:300000,min:2,stp:.75,sc:[3,3,5,4,3,5],tool:"Power Automate",eff:"S"},
+ {f:"Claims",n:"Claim scrubber edit resolution",vol:700000,min:4,stp:.50,sc:[4,4,3,2,4,4],tool:"UiPath",eff:"M"},
+ {f:"Patient Access",n:"Demographic & insurance capture (IDP)",vol:600000,min:5,stp:.60,sc:[4,4,3,3,4,3],tool:"IDP (Doc Understanding)",eff:"M"},
+ {f:"Patient Access",n:"Prior authorization status & follow-up",vol:180000,min:9,stp:.55,sc:[4,3,3,2,4,3],tool:"UiPath (unattended)",eff:"L"},
+ {f:"Coding & Charge",n:"Charge entry / posting from source docs",vol:500000,min:4,stp:.55,sc:[4,4,3,3,3,4],tool:"UiPath + IDP",eff:"M"},
+ {f:"Patient Access",n:"Good Faith Estimate generation",vol:250000,min:6,stp:.65,sc:[3,4,3,3,4,3],tool:"Power Automate",eff:"M"},
+ {f:"Payment Posting",n:"Manual EOB posting (paper/lockbox, IDP)",vol:250000,min:8,stp:.55,sc:[4,4,3,3,3,3],tool:"IDP + Power Automate",eff:"M"},
+ {f:"Denials & Appeals",n:"Auto-resubmission of correctable denials",vol:200000,min:8,stp:.50,sc:[4,3,3,2,4,3],tool:"UiPath",eff:"L"},
+ {f:"A/R & Patient Billing",n:"Predictive A/R worklist prioritization",vol:1000000,min:1,stp:.70,sc:[4,4,2,3,5,3],tool:"AI/ML model",eff:"L"},
+ {f:"Coding & Charge",n:"Medical record retrieval & attachment",vol:220000,min:7,stp:.60,sc:[3,3,3,3,3,3],tool:"UiPath + IDP",eff:"M"},
+ {f:"Patient Access",n:"Insurance discovery (self-pay coverage)",vol:90000,min:12,stp:.45,sc:[3,2,3,3,3,4],tool:"UiPath + vendor API",eff:"M"},
+ {f:"Client Services",n:"Recurring client reporting & distribution",vol:5200,min:60,stp:.80,sc:[3,2,5,4,3,5],tool:"Power Automate + BI",eff:"S"},
+ {f:"Denials & Appeals",n:"Denial root-cause trending & reporting",vol:1040,min:45,stp:.80,sc:[3,2,4,4,4,5],tool:"Power BI + Automate",eff:"S"},
+ {f:"Claims",n:"Secondary / COB claim submission",vol:400000,min:5,stp:.55,sc:[3,3,3,3,3,4],tool:"UiPath",eff:"M"},
+ {f:"Payment Posting",n:"Unapplied / unidentified cash resolution",vol:120000,min:12,stp:.45,sc:[3,2,2,2,3,3],tool:"UiPath + IDP",eff:"L"},
+ {f:"Payment Posting",n:"Credit balance & refund processing",vol:100000,min:14,stp:.40,sc:[3,2,2,2,3,2],tool:"UiPath (attended)",eff:"L"},
+ {f:"Claims",n:"Claim attachment / documentation submission",vol:150000,min:6,stp:.60,sc:[3,2,3,3,2,4],tool:"UiPath",eff:"M"},
+ {f:"Denials & Appeals",n:"Appeal letter generation (GenAI)",vol:120000,min:18,stp:.40,sc:[4,3,2,2,4,2],tool:"Copilot Studio / agentic",eff:"L"},
+ {f:"A/R & Patient Billing",n:"Patient billing inquiry assistant",vol:480000,min:6,stp:.60,sc:[3,4,3,3,3,3],tool:"Copilot Studio",eff:"M"},
+];
+const EFFORT_X={S:0,M:1,L:2};
+const WAVE_COLOR={1:"#168A6E",2:"#D99A2B",3:"#B05A50"};
+
+let weights=DEFAULT_W.slice(), rate=20, real=0.85, fnFilter="All", waveFilter="All";
+
+function norm(w){const s=w.reduce((a,b)=>a+b,0)||1;return w.map(x=>x/s);}
+function score(sc){const wn=norm(weights);return sc.reduce((a,v,i)=>a+v*wn[i],0)*20;}
+function hours(d){return d.vol*d.min*d.stp/60;}
+function netVal(d){return hours(d)*rate*real;}
+
+(function assignWaves(){
+  const wn=norm(DEFAULT_W);
+  DATA.forEach(d=>{
+    const s=d.sc.reduce((a,v,i)=>a+v*wn[i],0)*20;
+    d.wave=(s>=78&&d.eff!=="L"&&d.sc[5]>=4)?1:(s>=70&&d.eff==="S")?1:(s>=62)?2:3;
+  });
+})();
+
+const fmt0=n=>Math.round(n).toLocaleString();
+const fmtMoney=n=> n>=1e6 ? "$"+(n/1e6).toFixed(2)+"M" : "$"+fmt0(n);
+
+function visible(){return DATA.filter(d=>(fnFilter==="All"||d.f===fnFilter)&&(waveFilter==="All"||d.wave==waveFilter));}
+function ranked(){return visible().map(d=>({d,s:score(d.sc)})).sort((a,b)=>b.s-a.s);}
+
+function buildSliders(){
+  const box=document.getElementById("sliders");box.innerHTML="";
+  CRIT.forEach((c,i)=>{
+    const wn=norm(weights);
+    const el=document.createElement("div");el.className="slider";
+    el.innerHTML=`<div class="row"><span class="lab">${c.lab}</span><span class="pct" id="pct${i}">${Math.round(wn[i]*100)}%</span></div>
+      <input type="range" min="0" max="40" value="${weights[i]}" id="sl${i}" style="--fill:${weights[i]/40*100}%">`;
+    box.appendChild(el);
+    el.querySelector("input").addEventListener("input",e=>{
+      weights[i]=+e.target.value;
+      e.target.style.setProperty("--fill",(weights[i]/40*100)+"%");
+      refreshPcts();render();
+    });
+  });
+}
+function refreshPcts(){const wn=norm(weights);CRIT.forEach((c,i)=>{document.getElementById("pct"+i).textContent=Math.round(wn[i]*100)+"%";});}
+
+function buildChips(){
+  const fns=["All",...[...new Set(DATA.map(d=>d.f))]];
+  const fb=document.getElementById("fnchips");fb.innerHTML="";
+  fns.forEach(f=>{
+    const c=document.createElement("div");c.className="chip"+(f===fnFilter?" on":"");c.textContent=f;
+    c.onclick=()=>{fnFilter=f;buildChips();render();};fb.appendChild(c);
+  });
+  const wb=document.getElementById("wavechips");wb.innerHTML="";
+  [["All","All"],["1","Wave 1"],["2","Wave 2"],["3","Wave 3"]].forEach(([v,l])=>{
+    const c=document.createElement("div");const on=String(waveFilter)===v;
+    c.className="chip w"+(on?" on":"");c.textContent=l;
+    if(v!=="All")c.style.setProperty("--ww",WAVE_COLOR[v]);
+    c.onclick=()=>{waveFilter=v;buildChips();render();};wb.appendChild(c);
+  });
+}
+
+function renderStats(){
+  const vis=visible();
+  const H=vis.reduce((a,d)=>a+hours(d),0);
+  const V=vis.reduce((a,d)=>a+netVal(d),0);
+  const fte=H/1800;
+  const cards=[
+    ["Annual hours freed",fmt0(H),"across "+vis.length+" opportunities"],
+    ["Annual value (net)",fmtMoney(V),"after realization haircut"],
+    ["FTE-equivalent",fte.toFixed(0),"capacity created"],
+    ["Opportunities",vis.length,"in current view"],
+  ];
+  document.getElementById("stats").innerHTML=cards.map(c=>
+    `<div class="stat"><div class="k">${c[0]}</div><div class="v mono">${c[1]}</div><div class="sub">${c[2]}</div></div>`).join("");
+}
+
+const CH={w:760,h:360,l:46,r:18,t:18,b:42};
+function renderChart(){
+  const svg=document.getElementById("chart");
+  const rk=ranked();
+  const topIds=new Set(rk.slice(0,5).map(x=>x.d.n));
+  const plotW=CH.w-CH.l-CH.r, plotH=CH.h-CH.t-CH.b;
+  const xOf=eff=>CH.l+(EFFORT_X[eff]+0.5)/3*plotW;
+  const yOf=s=>CH.t+plotH-(s/100)*plotH;
+  const jit=i=>((i*37)%60-30);
+  let g="";
+  [0,25,50,75,100].forEach(v=>{
+    const y=yOf(v);
+    g+=`<line class="gridline" x1="${CH.l}" y1="${y}" x2="${CH.w-CH.r}" y2="${y}"/>`;
+    g+=`<text class="axis-l" x="${CH.l-8}" y="${y+3}" text-anchor="end">${v}</text>`;
+  });
+  g+=`<text class="quad" x="${CH.l+plotW*0.16}" y="${CH.t+18}">Quick wins</text>`;
+  g+=`<text class="quad" x="${CH.w-CH.r-8}" y="${CH.t+18}" text-anchor="end">Big bets</text>`;
+  g+=`<text class="quad" x="${CH.l+plotW*0.16}" y="${CH.h-CH.b-8}">Fill-ins</text>`;
+  g+=`<text class="quad" x="${CH.w-CH.r-8}" y="${CH.h-CH.b-8}" text-anchor="end">Heavy lifts</text>`;
+  ["Low effort","Medium","High effort"].forEach((t,i)=>{
+    g+=`<text class="axis-l" x="${CH.l+(i+0.5)/3*plotW}" y="${CH.h-14}" text-anchor="middle">${t}</text>`;
+  });
+  g+=`<text class="axis-l" x="14" y="${CH.t+plotH/2}" text-anchor="middle" transform="rotate(-90 14 ${CH.t+plotH/2})">Priority score</text>`;
+  const maxV=Math.max(...DATA.map(netVal));
+  rk.forEach(({d,s})=>{
+    const idx=DATA.indexOf(d);
+    const cx=xOf(d.eff)+jit(idx);
+    const cy=yOf(s);
+    const rad=7+Math.sqrt(netVal(d)/maxV)*20;
+    const top=topIds.has(d.n);
+    g+=`<circle class="bub" data-i="${idx}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${rad.toFixed(1)}"
+      fill="${WAVE_COLOR[d.wave]}" fill-opacity="${top?0.9:0.5}"
+      stroke="${top?'#0E1B2A':WAVE_COLOR[d.wave]}" stroke-width="${top?2:1}"/>`;
+  });
+  svg.innerHTML=g;
+  const tip=document.getElementById("tip");
+  svg.querySelectorAll("circle.bub").forEach(c=>{
+    c.addEventListener("mousemove",()=>{
+      const d=DATA[+c.dataset.i];
+      const box=svg.getBoundingClientRect();
+      const sx=box.width/CH.w, sy=box.height/CH.h;
+      tip.innerHTML=`<b>${d.n}</b>
+        <div class="r"><span>Score</span><span class="mono">${Math.round(score(d.sc))}</span></div>
+        <div class="r"><span>Net value</span><span class="mono">${fmtMoney(netVal(d))}</span></div>
+        <div class="r"><span>Hours / yr</span><span class="mono">${fmt0(hours(d))}</span></div>
+        <div class="r"><span>Wave</span><span class="mono">${d.wave} · ${d.eff}</span></div>`;
+      tip.style.opacity=1;tip.style.transform="translateY(0)";
+      let lx=(+c.getAttribute("cx"))*sx+14, ly=(+c.getAttribute("cy"))*sy-10;
+      if(lx>box.width-240)lx-=250;
+      tip.style.left=lx+"px";tip.style.top=ly+"px";
+    });
+    c.addEventListener("mouseleave",()=>{tip.style.opacity=0;tip.style.transform="translateY(4px)";});
+  });
+}
+
+const rowEls=new Map();
+function renderRows(){
+  const wrap=document.getElementById("rows");
+  const rk=ranked();
+  document.getElementById("count").textContent=`${rk.length} opportunities · ranked by current weighting`;
+  const firstPos=new Map();
+  rowEls.forEach((el,k)=>firstPos.set(k,el.getBoundingClientRect().top));
+  if(!rk.length){wrap.innerHTML='<div class="empty">No opportunities match these filters.</div>';rowEls.clear();return;}
+  if(wrap.querySelector(".empty"))wrap.innerHTML="";
+  const seen=new Set();
+  rk.forEach(({d,s},i)=>{
+    seen.add(d.n);
+    let el=rowEls.get(d.n);
+    if(!el){
+      el=document.createElement("div");el.className="opp";
+      el.innerHTML=`<div class="rank"></div>
+        <div><div class="name"></div><div class="fn"></div></div>
+        <div class="scorecell"><div class="bar"><i></i></div><div class="scorenum mono"></div></div>
+        <div class="num val c-val"></div>
+        <div class="tool c-tool"></div>
+        <div class="c-eff"><span class="wave"></span></div>`;
+      rowEls.set(d.n,el);
+    }
+    el.querySelector(".rank").textContent=i+1;
+    el.querySelector(".rank").classList.toggle("top",i<5);
+    el.querySelector(".name").textContent=d.n;
+    el.querySelector(".fn").textContent=d.f;
+    el.querySelector(".bar i").style.width=Math.min(100,s)+"%";
+    el.querySelector(".scorenum").textContent=Math.round(s);
+    el.querySelector(".num.val").textContent=fmtMoney(netVal(d));
+    el.querySelector(".tool").textContent=d.tool;
+    const wv=el.querySelector(".wave");
+    wv.textContent="Wave "+d.wave;
+    wv.style.background=WAVE_COLOR[d.wave]+"22";
+    wv.style.color=WAVE_COLOR[d.wave];
+    wrap.appendChild(el);
+  });
+  rowEls.forEach((el,k)=>{if(!seen.has(k)){el.remove();rowEls.delete(k);}});
+  rowEls.forEach((el,k)=>{
+    const last=el.getBoundingClientRect().top;
+    const first=firstPos.has(k)?firstPos.get(k):last;
+    const dy=first-last;
+    if(dy){
+      el.style.transform=`translateY(${dy}px)`;el.style.transition="none";
+      requestAnimationFrame(()=>{el.style.transition="transform .5s cubic-bezier(.4,0,.2,1)";el.style.transform="";});
+    }
+  });
+}
+
+function render(){renderStats();renderChart();renderRows();}
+
+document.getElementById("rate").addEventListener("input",e=>{rate=Math.max(0,+e.target.value||0);render();});
+document.getElementById("real").addEventListener("input",e=>{real=Math.max(0,(+e.target.value||0)/100);render();});
+document.getElementById("reset").addEventListener("click",()=>{
+  weights=DEFAULT_W.slice();rate=20;real=0.85;fnFilter="All";waveFilter="All";
+  document.getElementById("rate").value=20;document.getElementById("real").value=85;
+  buildSliders();buildChips();render();
+});
+
+buildSliders();buildChips();render();
+window.addEventListener("resize",renderChart);
+</script>
+</body>
+</html>
